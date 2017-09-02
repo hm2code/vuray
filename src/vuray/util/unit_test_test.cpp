@@ -16,6 +16,8 @@ inline void failed_trap() {
 #define VURAY_UNIT_TEST_FAILED_FN failed_trap
 #include "unit_test.h"
 
+using namespace vuray::util;
+
 namespace {
 bool test_assert_eq_int() {
     failed_trap_called = false;

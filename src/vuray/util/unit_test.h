@@ -56,6 +56,7 @@ inline void print_diagnostics(T expected, T actual, const char* message,
     out << "  Actual: "; put_value(out, actual) << '\n';
     out << "at " << file_name << " line " << line_num << std::endl;
 }
+} // anonymous
 
 /// Generic implementation expecting the values to be equal.
 template<typename T>
@@ -80,11 +81,10 @@ inline void assert_eq_(const char* expected, const char* actual,
         VURAY_UNIT_TEST_FAILED_FN();
     }
 }
-}
 
 // Asserts that `actual` equals to `expected`.
 #define assert_eq(expected, actual, message) \
-    vuray::util::assert_eq_((expected), (actual), (message),\
+    assert_eq_((expected), (actual), (message),\
             VURAY_UNIT_TEST_OUTPUT, __FILE__, __LINE__)
 
 } // util

@@ -5,4 +5,6 @@ set(VURAY_VERSION_MAJOR 0)
 set(VURAY_VERSION_MINOR 1)
 set(VURAY_VERSION_PATCH 0)
 
-add_directory(src)
+enable_testing()
+
+add_subdirectory(src)

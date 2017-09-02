@@ -1,1 +1,1 @@
-add_directory(util)
+add_subdirectory(util)

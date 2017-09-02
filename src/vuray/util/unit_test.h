@@ -3,7 +3,7 @@
 // ~~~~~~~~~~~
 // Unit testing utilities.
 //
-// Athor: hm2code
+// Author: hm2code
 //
 #pragma once
 #include <iostream>

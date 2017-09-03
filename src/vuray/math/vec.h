@@ -6,6 +6,9 @@
 // Author: hm2code
 //
 #pragma once
+#include <array>
+#include <cstddef>
+#include <cmath>
 
 namespace vuray {
 namespace math {
@@ -13,118 +16,184 @@ namespace math {
 // Vector element indeces.
 enum { X = 0, Y, Z, W };
 
-// Vector data storage with a pointer-like interface.
-template<typename T, int SIZE>
-class vec_data {
-public:
-    operator const T*() const { return data; }
-    operator T*() { return data; }
-
-private:
-    T data[SIZE];
-};
-
-// A (very) generic vector.
-template<typename T, int SIZE, typename DATA>
+// A generic vector of `SIZE` elements of type `T`.
+template<typename T, std::size_t SIZE>
 struct vec {
 public:
-    T x() const { return data[X]; }
-    void set_x(T x) { data[X] = x; }
+    vec() {}
+    template<typename... TT>
+    constexpr vec(TT... values) : data{values...} {}
 
-    T y() const {
+    constexpr T x() const { return data[X]; }
+    constexpr void set_x(T x) { data[X] = x; }
+
+    constexpr T y() const {
         static_assert(SIZE > 1, "Need a 2 element vector or higher");
         return data[Y];
     }
-    void set_y(T y) {
+    constexpr void set_y(T y) {
         static_assert(SIZE > 1, "Need a 2 element vector or higher");
         data[Y] = y;
     }
 
-    T z() const {
+    constexpr T z() const {
         static_assert(SIZE > 2, "Need a 3 element vector or higher");
         return data[Z];
     }
-    void set_z(T z) {
+    constexpr void set_z(T z) {
         static_assert(SIZE > 2, "Need a 3 element vector or higher");
         data[Z] = z;
     }
 
-    T w() const {
+    constexpr T w() const {
         static_assert(SIZE > 3, "Need a 4 element vector or higher");
         return data[W];
     }
-    void set_w(T w) {
+    constexpr void set_w(T w) {
         static_assert(SIZE > 3, "Need a 4 element vector or higher");
         data[W] = w;
     }
 
-    template<typename TT, typename D>
-    vec<T, SIZE, DATA>& operator +=(const vec<TT, SIZE, D> v) {
-        for (int i = 0; i < SIZE; ++i) {
+    template<typename TT>
+    constexpr vec<T, SIZE>& operator +=(vec<TT, SIZE> v) {
+        for (auto i = 0; i < SIZE; ++i) {
             data[i] += v.data[i];
         }
         return *this;
     }
 
-    template<typename TT, typename D>
-    vec<T, SIZE, DATA>& operator -=(const vec<TT, SIZE, D> v) {
-        for (int i = 0; i < SIZE; ++i) {
+    template<typename TT>
+    constexpr vec<T, SIZE>& operator -=(vec<TT, SIZE> v) {
+        for (auto i = 0; i < SIZE; ++i) {
             data[i] -= v.data[i];
         }
         return *this;
     }
 
-    template<typename TT, typename D>
-    vec<T, SIZE, DATA>& operator *=(const vec<TT, SIZE, D> v) {
-        for (int i = 0; i < SIZE; ++i) {
+    template<typename TT>
+    constexpr vec<T, SIZE>& operator *=(vec<TT, SIZE> v) {
+        for (auto i = 0; i < SIZE; ++i) {
             data[i] *= v.data[i];
         }
         return *this;
     }
 
-    template<typename TT, typename D>
-    vec<T, SIZE, DATA>& operator /=(const vec<TT, SIZE, D> v) {
-        for (int i = 0; i < SIZE; ++i) {
+    template<typename TT>
+    constexpr vec<T, SIZE>& operator /=(vec<TT, SIZE> v) {
+        for (auto i = 0; i < SIZE; ++i) {
             data[i] /= v.data[i];
         }
         return *this;
     }
 
     template<typename TT>
-    vec<T, SIZE, DATA>& operator +=(TT s) {
-        for (int i = 0; i < SIZE; ++i) {
+    constexpr vec<T, SIZE>& operator +=(TT s) {
+        for (auto i = 0; i < SIZE; ++i) {
             data[i] += s;
         }
         return *this;
     }
 
     template<typename TT>
-    vec<T, SIZE, DATA>& operator -=(TT s) {
-        for (int i = 0; i < SIZE; ++i) {
+    constexpr vec<T, SIZE>& operator -=(TT s) {
+        for (auto i = 0; i < SIZE; ++i) {
             data[i] -= s;
         }
         return *this;
     }
 
     template<typename TT>
-    vec<T, SIZE, DATA>& operator *=(TT s) {
-        for (int i = 0; i < SIZE; ++i) {
+    constexpr vec<T, SIZE>& operator *=(TT s) {
+        for (auto i = 0; i < SIZE; ++i) {
             data[i] *= s;
         }
         return *this;
     }
 
     template<typename TT>
-    vec<T, SIZE, DATA>& operator /=(TT s) {
-        for (int i = 0; i < SIZE; ++i) {
+    constexpr vec<T, SIZE>& operator /=(TT s) {
+        for (auto i = 0; i < SIZE; ++i) {
             data[i] /= s;
         }
         return *this;
     }
 
+    constexpr T dot(vec<T, SIZE> v) const {
+        T acc = 0;
+        for (auto i = 0; i < SIZE; ++i) {
+            acc += data[i] * v.data[i];
+        }
+        return acc;
+    }
+
+    constexpr T length_sq() const {
+        T acc = 0;
+        for (auto i = 0; i < SIZE; ++i) {
+            acc += data[i] * data[i];
+        }
+        return acc;
+    }
+
+    T length() const { return std::sqrt(length_sq()); }
+
+    vec<T, SIZE> normalized() const {
+        vec<T, SIZE> result{*this};
+        return result *= static_cast<T>(1) / length();
+    }
+
 private:
-    DATA data;
+    T data[SIZE];
 };
+
+template<typename T, std::size_t SIZE>
+constexpr vec<T, SIZE> operator +(vec<T, SIZE> a, vec<T, SIZE> b) {
+    return a += b;
+}
+
+template<typename T, std::size_t SIZE>
+constexpr vec<T, SIZE> operator +(vec<T, SIZE> v, T s) {
+    return v += s;
+}
+
+template<typename T, std::size_t SIZE>
+constexpr vec<T, SIZE> operator +(T s, vec<T, SIZE> v) {
+    return v += s;
+}
+
+template<typename T, std::size_t SIZE>
+constexpr vec<T, SIZE> operator -(vec<T, SIZE> a, vec<T, SIZE> b) {
+    return a -= b;
+}
+
+template<typename T, std::size_t SIZE>
+constexpr vec<T, SIZE> operator -(vec<T, SIZE> v, T s) {
+    return v -= s;
+}
+
+template<typename T, std::size_t SIZE>
+constexpr vec<T, SIZE> operator *(vec<T, SIZE> a, vec<T, SIZE> b) {
+    return a *= b;
+}
+
+template<typename T, std::size_t SIZE>
+constexpr vec<T, SIZE> operator *(vec<T, SIZE> v, T s) {
+    return v *= s;
+}
+
+template<typename T, std::size_t SIZE>
+constexpr vec<T, SIZE> operator *(T s, vec<T, SIZE> v) {
+    return v *= s;
+}
+
+template<typename T, std::size_t SIZE>
+constexpr vec<T, SIZE> operator /(vec<T, SIZE> a, vec<T, SIZE> b) {
+    return a /= b;
+}
+
+template<typename T, std::size_t SIZE>
+constexpr vec<T, SIZE> operator /(vec<T, SIZE> v, T s) {
+    return v /= s;
+}
 
 } // math
 } // vuray

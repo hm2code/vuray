@@ -33,19 +33,19 @@ inline void assert_failed_fn_default() {
 namespace {
 // Puts `value` into the output stream.
 template<typename T> 
-std::ostream& put_value(std::ostream& out, T value) {
+inline std::ostream& put_value(std::ostream& out, T value) {
     return out << value;
 }
 
 // Specialization for bool.
 template<>
-std::ostream& put_value(std::ostream& out, bool value) {
+inline std::ostream& put_value(std::ostream& out, bool value) {
     return out << (value ? "true" : "false");
 }
 
 // Specialization for strings.
 template<>
-std::ostream& put_value(std::ostream& out, const char* value) {
+inline std::ostream& put_value(std::ostream& out, const char* value) {
     return out << (value ? value : "nullptr");
 }
 

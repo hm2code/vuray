@@ -7,11 +7,13 @@
 //
 #pragma once
 #include <iostream>
+#include <cstring>
 
 namespace vuray {
 namespace util {
 
 #ifndef VURAY_UNIT_TEST_FAILED_FN
+#include <cstdlib>
 namespace {
 inline void assert_failed_fn_default() {
     std::exit(1);

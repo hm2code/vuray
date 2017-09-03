@@ -157,6 +157,62 @@ void test_operator_div() {
     assert_eq(4.f, lhs.z(), "lhs.z() == 4");
 }
 
+void test_operator_add_scalar() {
+    vec<float, 3, vec_data<float, 3>> lhs;
+
+    lhs.set_x(1);
+    lhs.set_y(2);
+    lhs.set_z(3);
+
+    lhs += 2;
+
+    assert_eq(3.f, lhs.x(), "lhs.x() == 3");
+    assert_eq(4.f, lhs.y(), "lhs.y() == 4");
+    assert_eq(5.f, lhs.z(), "lhs.z() == 5");
+}
+
+void test_operator_sub_scalar() {
+    vec<float, 3, vec_data<float, 3>> lhs;
+
+    lhs.set_x(1);
+    lhs.set_y(2);
+    lhs.set_z(3);
+
+    lhs -= 2;
+
+    assert_eq(-1.f, lhs.x(), "lhs.x() == -1");
+    assert_eq(0.f, lhs.y(), "lhs.y() == 0");
+    assert_eq(1.f, lhs.z(), "lhs.z() == 1");
+}
+
+void test_operator_mul_scalar() {
+    vec<float, 3, vec_data<float, 3>> lhs;
+
+    lhs.set_x(1);
+    lhs.set_y(2);
+    lhs.set_z(3);
+
+    lhs *= 2;
+
+    assert_eq(2.f, lhs.x(), "lhs.x() == 2");
+    assert_eq(4.f, lhs.y(), "lhs.y() == 4");
+    assert_eq(6.f, lhs.z(), "lhs.z() == 6");
+}
+
+void test_operator_div_scalar() {
+    vec<float, 3, vec_data<float, 3>> lhs;
+
+    lhs.set_x(12);
+    lhs.set_y(10);
+    lhs.set_z(8);
+
+    lhs /= 2;
+
+    assert_eq(6.f, lhs.x(), "lhs.x() == 6");
+    assert_eq(5.f, lhs.y(), "lhs.y() == 5");
+    assert_eq(4.f, lhs.z(), "lhs.z() == 4");
+}
+
 } // anonymous
 
 int main() {
@@ -172,6 +228,11 @@ int main() {
     test_operator_sub();
     test_operator_mul();
     test_operator_div();
+
+    test_operator_add_scalar();
+    test_operator_sub_scalar();
+    test_operator_mul_scalar();
+    test_operator_div_scalar();
 
     return 0;
 }

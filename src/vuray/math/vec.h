@@ -6,16 +6,12 @@
 // Author: hm2code
 //
 #pragma once
-#include <type_traits>
 
 namespace vuray {
 namespace math {
 
 // Vector element indeces.
 enum { X = 0, Y, Z, W };
-
-// Color element indeces.
-enum { R = 0, G, B, A };
 
 // Vector data storage with a pointer-like interface.
 template<typename T, int SIZE>
@@ -90,6 +86,38 @@ public:
     vec<T, SIZE, DATA>& operator /=(const vec<TT, SIZE, D> v) {
         for (int i = 0; i < SIZE; ++i) {
             data[i] /= v.data[i];
+        }
+        return *this;
+    }
+
+    template<typename TT>
+    vec<T, SIZE, DATA>& operator +=(TT s) {
+        for (int i = 0; i < SIZE; ++i) {
+            data[i] += s;
+        }
+        return *this;
+    }
+
+    template<typename TT>
+    vec<T, SIZE, DATA>& operator -=(TT s) {
+        for (int i = 0; i < SIZE; ++i) {
+            data[i] -= s;
+        }
+        return *this;
+    }
+
+    template<typename TT>
+    vec<T, SIZE, DATA>& operator *=(TT s) {
+        for (int i = 0; i < SIZE; ++i) {
+            data[i] *= s;
+        }
+        return *this;
+    }
+
+    template<typename TT>
+    vec<T, SIZE, DATA>& operator /=(TT s) {
+        for (int i = 0; i < SIZE; ++i) {
+            data[i] /= s;
         }
         return *this;
     }

@@ -47,6 +47,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <string.h>
 
 // Contains the number of failed assertions.
 static int utest_result = 0;
@@ -125,3 +126,66 @@ static inline void utest_assert_that(bool cond, const char* msg,
 #define assert_that_m(cond, msg) \
     utest_assert_that((cond), #cond": "msg, __FILE__, __LINE__, __func__, true)
 
+// Does the real job.
+static inline void utest_assert_str_eq(const char* expected, const char* actual,
+        const char* msg, const char* file, int line_num, const char* func,
+        bool fatal) {
+    const bool failed = !expected || !actual
+        ? expected != actual
+        : strcmp(expected, actual);
+    if (failed) {
+        fprintf(utest_out,
+                UTEST_MSG_START
+                "Expected: %s\n"
+                "  Actual: %s\n"
+                UTEST_MSG_END,
+                msg,
+                expected ? expected : "NULL",
+                actual ? actual : "NULL",
+                file, line_num, func);
+        ++utest_result;
+        if (fatal) {
+            utest_exit();
+        }
+    }
+}
+
+/**
+ * Non-fatal assertion that expects the strings to be equal.
+ * If the strings are not equal, then it prints diagnostic message to
+ * \ref utest_out, increments the number of failed assertions, and continues
+ * the test execution.
+ */
+#define expect_str_eq(expected, actual) \
+    utest_assert_str_eq((expected), (actual), "", __FILE__, __LINE__, \
+            __func__, false)
+
+/**
+ * Non-fatal assertion that expects the strings to be equal.
+ * If the strings are not equal, then it prints diagnostic message that
+ * includes `msg` to \ref utest_out, increments the number of failed assertions,
+ * and continues the test execution.
+ */
+#define expect_str_eq_m(expected, actual, msg) \
+    utest_assert_str_eq((expected), (actual), (msg), __FILE__, __LINE__, \
+            __func__, false)
+
+/**
+ * Fatal assertion that expects the strings to be equal.
+ * If the strings are not equal, then it prints diagnostic message to
+ * \ref utest_out, increments the number of failed assertions, and exits the
+ * test case by calling \ref utest_exit macro.
+ */
+#define assert_str_eq(expected, actual) \
+    utest_assert_str_eq((expected), (actual), "", __FILE__, __LINE__, \
+            __func__, true)
+
+/**
+ * Fatal assertion that expects the strings to be equal.
+ * If the strings are not equal, then it prints diagnostic message that
+ * includes `msg` to \ref utest_out, increments the number of failed asserions,
+ * and exits the test case by calling \ref utest_exit macro.
+ */
+#define assert_str_eq_m(expected, actual, msg) \
+    utest_assert_str_eq((expected), (actual), (msg), __FILE__, __LINE__, \
+            __func__, true)

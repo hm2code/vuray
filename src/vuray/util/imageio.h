@@ -1,12 +1,40 @@
 /**
  * \file    imageio.h
- * \brief   Raster image I/O.
+ * \brief   Raster Image I/O.
  *
  * \author  hm2code
  */
 #pragma once
 #include <stddef.h>
 #include <stdint.h>
+
+/**
+ * Error codes that may be returned by Image I/O functions.
+ */
+enum imageio_error {
+    /** No error. */
+    IMAGEIO_OK = 0,
+
+    /** An illegal argument was given to the function (e.g. null pointer). */
+    IMAGEIO_ERR_ILLEGALARG,
+
+    /** The requested image format / feature is not supported. */
+    IMAGEIO_ERR_UNSUPPORTED,
+
+    /**
+     * File I/O error occured.
+     * It could mean either a File I/O function returned an error (in this case
+     * it should be possible to obtain more details using `errno`) or an image
+     * cannot be read from file because the file is malformed / corrupted.
+     */
+    IMAGEIO_ERR_BADFILE,
+
+    /**
+     * No memory.
+     * Unable to allocate a buffer for pixel data to read an image into.
+     */
+    IMAGEIO_ERR_NOMEMORY
+};
 
 /**
  * Describes raster image with byte color components.
@@ -19,14 +47,10 @@ struct image {
      */
     uint8_t* pixels;
 
-    /**
-     * Width of the image in pixels.
-     */
+    /** Width of the image in pixels.  */
     size_t width;
 
-    /**
-     * Height of the image in pixels.
-     */
+    /** Height of the image in pixels.  */
     size_t height;
 
     /**

@@ -66,7 +66,7 @@ static void test_assert_that(void) {
     my_assert(utest_result == 2);
     my_assert(exit_called == 2);
 
-    assert_that_m("foo" == "bar", "something is wrong");
+    assert_that_m('a' == 'b', "something is wrong");
     my_assert(utest_result == 3);
     my_assert(exit_called == 3);
 

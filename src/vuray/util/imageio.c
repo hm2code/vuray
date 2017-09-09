@@ -12,12 +12,7 @@
 #include "imageio.h"
 
 // Extracts file extension into `buf`.
-// Returns 0 on success, which means that contents of `buf` has been modified.
-static int get_file_ext(const char* file_name, char* buf, size_t buf_len) {
-    if (!file_name || !buf || !buf_len) {
-        return IMAGEIO_ERR_ILLEGALARG;
-    }
-
+static void get_file_ext(const char* file_name, char* buf, size_t buf_len) {
     int i = 0;
     char* ext_ptr = strrchr(file_name, '.');
     if (ext_ptr) {
@@ -30,8 +25,6 @@ static int get_file_ext(const char* file_name, char* buf, size_t buf_len) {
         }
     }
     buf[i] = 0;
-
-    return IMAGEIO_OK;
 }
 
 // Netbpm:
@@ -88,30 +81,22 @@ static int ppm_write(const char* file_name, const struct image* img) {
     return result;
 }
 
-static int pgm_read(const char* file_name, struct image* img) {
-    FILE* file = fopen(file_name, "r");
-    if (!file) {
-        return IMAGEIO_ERR_BADFILE;
-    }
-
-    int format, max_val, result = IMAGEIO_OK;
+static int pgm_read(FILE* file, struct image* img) {
+    int format, max_val;
     int rc = fscanf(file, "P%d %zu %zu %d", &format, &img->width, &img->height,
             &max_val);
     if (rc != 4 || img->width < 1 || img->height < 1) {
-        result = IMAGEIO_ERR_BADFILE;
-        goto done;
+        return IMAGEIO_ERR_BADFILE;
     }
     if (format != 2 || max_val != 255) {
-        result = IMAGEIO_ERR_UNSUPPORTED;
-        goto done;
+        return IMAGEIO_ERR_UNSUPPORTED;
     }
     img->components = 1;
 
     const size_t size = img->width * img->height * img->components;
     img->pixels = malloc(size);
     if (!img->pixels) {
-        result = IMAGEIO_ERR_NOMEMORY;
-        goto done;
+        return IMAGEIO_ERR_NOMEMORY;
     }
 
     for (int i = 0; i < size; ++i) {
@@ -119,40 +104,29 @@ static int pgm_read(const char* file_name, struct image* img) {
         if (rc != 1) {
             free(img->pixels);
             img->pixels = 0;
-            result = IMAGEIO_ERR_BADFILE;
-            goto done;
+            return IMAGEIO_ERR_BADFILE;
         }
     }
 
-done:
-    fclose(file);
-    return result;
+    return IMAGEIO_OK;
 }
 
-static int ppm_read(const char* file_name, struct image* img) {
-    FILE* file = fopen(file_name, "r");
-    if (!file) {
-        return IMAGEIO_ERR_BADFILE;
-    }
-
-    int format, max_val, result = IMAGEIO_OK;
+static int ppm_read(FILE* file, struct image* img) {
+    int format, max_val;
     int rc = fscanf(file, "P%d %zu %zu %d", &format, &img->width, &img->height,
             &max_val);
     if (rc != 4 || img->width < 1 || img->height < 1) {
-        result = IMAGEIO_ERR_BADFILE;
-        goto done;
+        return IMAGEIO_ERR_BADFILE;
     }
     if (format != 3 || max_val != 255) {
-        result = IMAGEIO_ERR_UNSUPPORTED;
-        goto done;
+        return IMAGEIO_ERR_UNSUPPORTED;
     }
     img->components = 3;
 
     const size_t size = img->width * img->height * img->components;
     img->pixels = malloc(size);
     if (!img->pixels) {
-        result = IMAGEIO_ERR_NOMEMORY;
-        goto done;
+        return IMAGEIO_ERR_NOMEMORY;
     }
 
     for (int i = 0; i < size; ++i) {
@@ -160,46 +134,82 @@ static int ppm_read(const char* file_name, struct image* img) {
         if (rc != 1) {
             free(img->pixels);
             img->pixels = 0;
-            result = IMAGEIO_ERR_BADFILE;
-            goto done;
+            return IMAGEIO_ERR_BADFILE;
         }
     }
 
-done:
-    fclose(file);
+    return IMAGEIO_OK;
+}
+
+typedef int (*write_driver)(const char*, const struct image*);
+
+// Returns pointer to a function for writing files with the given extension.
+static write_driver get_write_driver(const char* ext) {
+    write_driver result = (write_driver)0;
+
+    if (!strcmp(ext, "ppm")) {
+        result = ppm_write;
+    } else if (!strcmp(ext, "pgm")) {
+        result = pgm_write;
+    }
+
+    return result;
+}
+
+typedef int (*read_driver)(FILE*, struct image*);
+
+// Returns pointer to a function for reading files with the given extension.
+static read_driver get_read_driver(const char* ext) {
+    read_driver result = (read_driver)0;
+
+    if (!strcmp(ext, "ppm")) {
+        result = ppm_read;
+    } else if (!strcmp(ext, "pgm")) {
+        result = pgm_read;
+    }
+
     return result;
 }
 
 // Public API
 
 int imageio_write(const char* file_name, const struct image* img) {
+    if (!file_name || !img) {
+        return IMAGEIO_ERR_ILLEGALARG;
+    }
+
     char ext[8];
+    get_file_ext(file_name, ext, sizeof(ext));
 
-    const int err = get_file_ext(file_name, ext, sizeof(ext));
-    if (err) {
-        return err;
+    const write_driver write_fn = get_write_driver(ext);
+    if (!write_fn) {
+        return IMAGEIO_ERR_UNSUPPORTED;
     }
 
-    if (!strcmp("ppm", ext)) {
-        return ppm_write(file_name, img);
-    } else if (!strcmp("pgm", ext)) {
-        return pgm_write(file_name, img);
-    }
-    return IMAGEIO_ERR_UNSUPPORTED;
+    return write_fn(file_name, img);
 }
 
 int imageio_read(const char* file_name, struct image* img) {
+    if (!file_name || !img) {
+        return IMAGEIO_ERR_ILLEGALARG;
+    }
+
     char ext[8];
+    get_file_ext(file_name, ext, sizeof(ext));
 
-    const int err = get_file_ext(file_name, ext, sizeof(ext));
-    if (err) {
-        return err;
+    const read_driver read_fn = get_read_driver(ext);
+    if (!read_fn) {
+        return IMAGEIO_ERR_UNSUPPORTED;
     }
 
-    if (!strcmp("ppm", ext)) {
-        return ppm_read(file_name, img);
-    } else if (!strcmp("pgm", ext)) {
-        return pgm_read(file_name, img);
+    // Opening / closing file here greatly simplifies the read functions.
+    FILE* file = fopen(file_name, "r");
+    if (!file) {
+        return IMAGEIO_ERR_BADFILE;
     }
-    return IMAGEIO_ERR_UNSUPPORTED;
+
+    const int result = read_fn(file, img);
+
+    fclose(file);
+    return result;
 }

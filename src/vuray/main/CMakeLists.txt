@@ -1,2 +1,2 @@
 add_executable(vuray main.c)
-target_link_libraries(vuray imageio)
+target_link_libraries(vuray imageio m)

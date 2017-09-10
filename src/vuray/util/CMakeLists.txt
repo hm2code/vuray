@@ -1,4 +1,4 @@
-add_library(imageio imageio.h imageio.c)
+add_library(imageio STATIC imageio.h imageio.c)
 
 # Unit tests
 add_executable(utest_test utest.h utest_test.c)

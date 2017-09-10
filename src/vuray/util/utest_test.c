@@ -133,10 +133,104 @@ static void test_assert_str_eq(void) {
     my_assert(exit_called == 4);
 }
 
+static void test_expect_near(void) {
+    utest_result = 0;
+
+    expect_near(0.f, 0.f, 0.01f);
+    my_assert(utest_result == 0);
+
+    expect_near_m(0.f, 0.001f, 0.01f, "Message");
+    my_assert(utest_result == 0);
+
+    expect_near(0.f, 0.01f, 0.01f);
+    my_assert(utest_result == 0);
+
+    expect_near(0.f, 0.1f, 0.01f);
+    my_assert(utest_result == 1);
+
+    expect_near_m(0.f, 1.f, 0.01f, "Zero and one");
+    my_assert(utest_result == 2);
+}
+
+static void test_assert_near(void) {
+    utest_result = 0;
+    exit_called = 0;
+
+    assert_near(0.f, 0.f, 0.01f);
+    my_assert(utest_result == 0);
+    my_assert(exit_called == 0);
+
+    assert_near_m(0.001f, 0.f, 0.01f, "Message");
+    my_assert(utest_result == 0);
+    my_assert(exit_called == 0);
+
+    assert_near(0.01f, 0.f, 0.01f);
+    my_assert(utest_result == 0);
+    my_assert(exit_called == 0);
+
+    assert_near(0.1f, 0.f, 0.01f);
+    my_assert(utest_result == 1);
+    my_assert(exit_called == 1);
+
+    assert_near_m(1.f, 0.f, 0.01f, "One and zero");
+    my_assert(utest_result == 2);
+    my_assert(exit_called == 2);
+}
+
+static void test_expect_float_eq(void) {
+    utest_result = 0;
+
+    expect_float_eq(1.2345f, 1.23456f);
+    my_assert(utest_result == 0);
+
+    expect_float_eq_m(-1.23456f, -1.2345f, "Works for negative floats too");
+    my_assert(utest_result == 0);
+
+    expect_float_eq(-0.00001f, 0.00001f);
+    my_assert(utest_result == 0);
+
+    expect_float_eq(-0.0001f, 0.0001f);
+    my_assert(utest_result == 1);
+
+    expect_float_eq_m(0.001f, -0.001f, "Too far away");
+    my_assert(utest_result == 2);
+}
+
+static void test_assert_float_eq(void) {
+    utest_result = 0;
+    exit_called = 0;
+
+    assert_float_eq(1.23456f, 1.23456f);
+    my_assert(utest_result == 0);
+    my_assert(exit_called == 0);
+
+    assert_float_eq_m(-1.2345f, -1.23456f, "Works for negative floats too");
+    my_assert(utest_result == 0);
+    my_assert(exit_called == 0);
+
+    assert_float_eq(-0.00001f, -0.00001f);
+    my_assert(utest_result == 0);
+    my_assert(exit_called == 0);
+
+    assert_float_eq(0.0001f, -0.0001f);
+    my_assert(utest_result == 1);
+    my_assert(exit_called == 1);
+
+    assert_float_eq_m(-0.001f, 0.001f, "The difference is too large");
+    my_assert(utest_result == 2);
+    my_assert(exit_called == 2);
+}
+
 int main(void) {
     test_expect_that();
     test_assert_that();
 
     test_expect_str_eq();
     test_assert_str_eq();
+
+    test_expect_near();
+    test_assert_near();
+
+    test_expect_float_eq();
+    test_assert_float_eq();
 }

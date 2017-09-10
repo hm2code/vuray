@@ -74,7 +74,7 @@ static int utest_result = 0;
 #define UTEST_MSG_END "at %s:%d: %s\n"
 /** \endcond */
 
-// Does the real job.
+// Generic assertion.
 static inline void utest_assert_that(bool cond, const char* msg,
         const char* file, int line_num, const char* func, bool fatal) {
     if (!cond) {
@@ -126,7 +126,7 @@ static inline void utest_assert_that(bool cond, const char* msg,
 #define assert_that_m(cond, msg) \
     utest_assert_that((cond), #cond": "msg, __FILE__, __LINE__, __func__, true)
 
-// Does the real job.
+// Assertion for equal strings.
 static inline void utest_assert_str_eq(const char* expected, const char* actual,
         const char* msg, const char* file, int line_num, const char* func,
         bool fatal) {
@@ -189,3 +189,120 @@ static inline void utest_assert_str_eq(const char* expected, const char* actual,
 #define assert_str_eq_m(expected, actual, msg) \
     utest_assert_str_eq((expected), (actual), (msg), __FILE__, __LINE__, \
             __func__, true)
+
+// Assertion for equal floats with up to `delta` precision.
+static inline void utest_assert_float_eq(float expected, float actual,
+        float delta, const char* msg, const char* file, int line_num,
+        const char* func, bool fatal) {
+    float diff = expected - actual;
+    if (diff < 0.f) {
+        diff = -diff;
+    }
+    if (diff > delta) {
+        fprintf(utest_out,
+                UTEST_MSG_START
+                "Expected: %f\n"
+                "  Actual: %f\n"
+                "   Delta: %f\n"
+                UTEST_MSG_END,
+                msg,
+                expected,
+                actual,
+                delta,
+                file, line_num, func);
+        ++utest_result;
+        if (fatal) {
+            utest_exit();
+        }
+    }
+}
+
+/**
+ * Non-fatal assertion that expects `actual` to be near `expected` no further
+ * than `delta`. If `abs(expected - actual) > delta`, then it prints diagnostic
+ * message to \ref utest_out, increments the number of failed assertions, and
+ * continues the test execution.
+ */
+#define expect_near(expected, actual, delta) \
+    utest_assert_float_eq((expected), (actual), (delta), "", __FILE__, \
+            __LINE__, __func__, false)
+
+/**
+ * Non-fatal assertion that expects `actual` to be near `expected` no further
+ * than `delta`. If `abs(expected - actual) > delta`, then it prints diagnostic
+ * message that includes `msg` to \ref utest_out, increments the number of
+ * failed assertions, and continues the test execution.
+ */
+#define expect_near_m(expected, actual, delta, msg) \
+    utest_assert_float_eq((expected), (actual), (delta), (msg), __FILE__, \
+            __LINE__, __func__, false)
+
+/**
+ * Fatal assertion that expects `actual` to be near `expected` no further
+ * than `delta`. If `abs(expected - actual) > delta`, then it prints diagnostic
+ * message to \ref utest_out, increments the number of failed assertions, and
+ * exits the test by calling \ref utest_exit macro.
+ */
+#define assert_near(expected, actual, delta) \
+    utest_assert_float_eq((expected), (actual), (delta), "", __FILE__, \
+            __LINE__, __func__, true)
+
+/**
+ * Fatal assertion that expects `actual` to be near `expected` no further
+ * than `delta`. If `abs(expected - actual) > delta`, then it prints diagnostic
+ * message that includes `msg` to \ref utest_out, increments the number of
+ * failed assertions, and exits the test by calling \ref utest_exit macro.
+ */
+#define assert_near_m(expected, actual, delta, msg) \
+    utest_assert_float_eq((expected), (actual), (delta), (msg), __FILE__, \
+            __LINE__, __func__, true)
+
+#ifndef utest_float_delta
+/**
+ * The delta to be used by these macros:
+ * - \ref expect_float_eq
+ * - \ref expect_float_eq_m
+ * - \ref assert_float_eq
+ * - \ref assert_float_eq_m
+ *
+ * Can be re-defined before including this file.
+ */
+#define utest_float_delta 0.0001f
+#endif // utest_float_delta
+
+/**
+ * Non-fatal assertion that expects `actual` to be near `expected` no further
+ * than \ref utest_float_delta. If `abs(expected - actual) > utest_float_delta`,
+ * then it prints diagnostic message to \ref utest_out, increments the number of
+ * failed assertions, and continues the test execution.
+ */
+#define expect_float_eq(expected, actual) \
+    expect_near(expected, actual, utest_float_delta)
+
+/**
+ * Non-fatal assertion that expects `actual` to be near `expected` no further
+ * than \ref utest_float_delta. If `abs(expected - actual) > utest_float_delta`,
+ * then it prints diagnostic message that contains `msg` to \ref utest_out,
+ * increments the number of failed assertions, and continues the test execution.
+ */
+#define expect_float_eq_m(expected, actual, msg) \
+    expect_near_m(expected, actual, utest_float_delta, msg)
+
+/**
+ * Fatal assertion that expects `actual` to be near `expected` no further
+ * than \ref utest_float_delta. If `abs(expected - actual) > utest_float_delta`,
+ * then it prints diagnostic message to \ref utest_out, increments the number of
+ * failed assertions, and exits the test by calling \ref utest_exit macro.
+ */
+#define assert_float_eq(expected, actual) \
+    assert_near(expected, actual, utest_float_delta)
+
+/**
+ * Fatal assertion that expects `actual` to be near `expected` no further
+ * than \ref utest_float_delta. If `abs(expected - actual) > utest_float_delta`,
+ * then it prints diagnostic message that contains `msg` to \ref utest_out,
+ * increments the number of failed assertions, and exits the test by calling
+ * \ref utest_exit macro.
+ */
+#define assert_float_eq_m(expected, actual, msg) \
+    assert_near_m(expected, actual, utest_float_delta, msg)

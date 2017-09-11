@@ -23,13 +23,20 @@ inline void vec3_store(float* dst, struct vec3 v) {
 }
 
 /** \cond */
-inline struct vec3 vec3_addv(struct vec3 a, struct vec3 b) {
-    return (struct vec3) { .x = a.x + b.x, .y = a.y + b.y, .z = a.z + b.z };
+#define vec3_define_op(name, op) \
+inline struct vec3 vec3_##name##v(struct vec3 a, struct vec3 b) { \
+    return (struct vec3) { .x = a.x op b.x, .y = a.y op b.y, .z = a.z op b.z };\
+} \
+inline struct vec3 vec3_##name##s(struct vec3 a, float b) { \
+    return (struct vec3) { .x = a.x op b, .y = a.y op b, .z = a.z op b }; \
 }
 
-inline struct vec3 vec3_adds(struct vec3 a, float b) {
-    return (struct vec3) { .x = a.x + b, .y = a.y + b, .z = a.z + b };
-}
+vec3_define_op(add, +);
+vec3_define_op(sub, -);
+vec3_define_op(mul, *);
+vec3_define_op(div, /);
+
+#undef vec3_define_op
 /** \endcond */
 
 /**
@@ -43,16 +50,6 @@ inline struct vec3 vec3_adds(struct vec3 a, float b) {
             default: vec3_adds \
     )((a), (b))
 
-/** \cond */
-inline struct vec3 vec3_subv(struct vec3 a, struct vec3 b) {
-    return (struct vec3) { .x = a.x - b.x, .y = a.y - b.y, .z = a.z - b.z };
-}
-
-inline struct vec3 vec3_subs(struct vec3 a, float b) {
-    return (struct vec3) { .x = a.x - b, .y = a.y - b, .z = a.z - b };
-}
-/** \endcond */
-
 /**
  * Returns `a - b`.
  * \param a - `struct vec3`
@@ -64,16 +61,6 @@ inline struct vec3 vec3_subs(struct vec3 a, float b) {
             default: vec3_subs \
     )((a), (b))
 
-/** \cond */
-inline struct vec3 vec3_mulv(struct vec3 a, struct vec3 b) {
-    return (struct vec3) { .x = a.x * b.x, .y = a.y * b.y, .z = a.z * b.z };
-}
-
-inline struct vec3 vec3_muls(struct vec3 a, float b) {
-    return (struct vec3) { .x = a.x * b, .y = a.y * b, .z = a.z * b };
-}
-/** \endcond */
-
 /**
  * Returns `a * b`.
  * \param a - `struct vec3`
@@ -84,16 +71,6 @@ inline struct vec3 vec3_muls(struct vec3 a, float b) {
             struct vec3: vec3_mulv, \
             default: vec3_muls \
     )((a), (b))
-
-/** \cond */
-inline struct vec3 vec3_divv(struct vec3 a, struct vec3 b) {
-    return (struct vec3) { .x = a.x / b.x, .y = a.y / b.y, .z = a.z / b.z };
-}
-
-inline struct vec3 vec3_divs(struct vec3 a, float b) {
-    return (struct vec3) { .x = a.x / b, .y = a.y / b, .z = a.z / b };
-}
-/** \endcond */
 
 /**
  * Returns `a / b`.

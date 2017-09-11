@@ -12,11 +12,11 @@
 #include <vuray/math/vec.h>
 #include <vuray/util/imageio.h>
 
-static struct vec3 color(struct ray r) {
+static struct vec3 color(struct vec3 origin, struct vec3 direction) {
     const struct vec3 white = { 1.f, 1.f, 1.f };
     const struct vec3 blue = { 0.5f, 0.7f, 1.f };
 
-    const struct vec3 unit_dir = vec3_normalize(r.direction);
+    const struct vec3 unit_dir = vec3_normalize(direction);
     const float t = 0.5f * (unit_dir.y + 1.f);
     return vec3_add(vec3_mul(white, 1.f - t), vec3_mul(blue, t));
 }
@@ -59,11 +59,9 @@ int main(int argc, const char* argv[]) {
             const float u = (float)i / (float)nx;
             const struct vec3 s_horiz = vec3_mul(horiz, u);
 
-            const struct ray r = (struct ray) {
-                .origin = origin,
-                .direction = vec3_add(ll_corner, vec3_add(s_horiz, s_vert))
-            };
-            const struct vec3 col = color(r);
+            const struct vec3 direction = vec3_add(ll_corner,
+                    vec3_add(s_horiz, s_vert));
+            const struct vec3 col = color(origin, direction);
             frame_buf[pixel + 0] = col.x;
             frame_buf[pixel + 1] = col.y;
             frame_buf[pixel + 2] = col.z;

@@ -106,12 +106,10 @@ static void test_vec3_normalize(void) {
 }
 
 static void test_ray_point_at(void) {
-    struct ray r = (struct ray) {
-        .origin = (struct vec3) { .x = 0.f, .y = 0.f, .z = 0.f },
-        .direction = (struct vec3) { .x = 0.f, .y = 1.f, .z = 0.f }
-    };
+    struct vec3 origin = (struct vec3) { .x = 0.f, .y = 0.f, .z = 0.f };
+    struct vec3 direction = (struct vec3) { .x = 0.f, .y = 1.f, .z = 0.f };
 
-    struct vec3 p = ray_point_at(r, 2.f);
+    struct vec3 p = ray_point_at(origin, direction, 2.f);
 
     expect_float_eq(0.f, p.x);
     expect_float_eq(2.f, p.y);

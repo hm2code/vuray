@@ -127,17 +127,11 @@ inline struct vec3 vec3_normalize(struct vec3 v) {
 }
 
 /**
- * Represents a ray from `origin` in the given `direction`.
+ * Returns a point on the ray at distance `t` from the ray `origin` in the ray
+ * `direction`.
  */
-struct ray {
-    struct vec3 origin;
-    struct vec3 direction;
-};
-
-/**
- * Returns point on ray `r` at distance `t` from the ray origin.
- */
-inline struct vec3 ray_point_at(struct ray r, float t) {
-    r.direction = vec3_mul(r.direction, t);
-    return vec3_add(r.origin, r.direction);
+inline struct vec3 ray_point_at(struct vec3 origin, struct vec3 direction,
+        float t) {
+    direction = vec3_mul(direction, t);
+    return vec3_add(origin, direction);
 }

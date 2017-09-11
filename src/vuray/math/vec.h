@@ -14,6 +14,14 @@ struct vec3 {
     float x, y, z;
 };
 
+/**
+ * Stores vector `v` into memory pointed by `dst`. Please note that the memory
+ * must have space for 3 float values.
+ */
+inline void vec3_store(float* dst, struct vec3 v) {
+    dst[0] = v.x; dst[1] = v.y; dst[2] = v.z;
+}
+
 /** \cond */
 inline struct vec3 vec3_addv(struct vec3 a, struct vec3 b) {
     return (struct vec3) { .x = a.x + b.x, .y = a.y + b.y, .z = a.z + b.z };

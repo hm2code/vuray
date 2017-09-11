@@ -8,6 +8,17 @@
 
 #include "vec.h"
 
+static void test_vec3_store(void) {
+    struct vec3 a = (struct vec3) { .x = 0.1f, .y = 0.2f, .z = 0.3f };
+    float memory[3];
+
+    vec3_store(memory, a);
+
+    expect_float_eq(0.1f, memory[0]);
+    expect_float_eq(0.2f, memory[1]);
+    expect_float_eq(0.3f, memory[2]);
+}
+
 static void test_vec3_add(void) {
     struct vec3 a = (struct vec3) { .x = 0.f, .y = 1.f, .z = 2.f };
     struct vec3 b = (struct vec3) { .x = 3.f, .y = 4.f, .z = 5.f };
@@ -117,6 +128,8 @@ static void test_ray_point_at(void) {
 }
 
 int main(void) {
+    test_vec3_store();
+
     test_vec3_add();
     test_vec3_sub();
     test_vec3_mul();

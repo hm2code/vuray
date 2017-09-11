@@ -19,8 +19,12 @@
         size_t capacity; \
     }; \
 static inline struct name name##_create(size_t capacity) { \
+    element_type* records; \
+    if (posix_memalign((void**)&records, 16, capacity * sizeof(element_type))){\
+        abort(); \
+    } \
     return (struct name) { \
-        .records = malloc(capacity * sizeof(element_type)), \
+        .records = records, \
         .size = 0, \
         .capacity = capacity \
     }; \
@@ -32,11 +36,14 @@ static inline void name##_destroy(struct name* tbl) { \
 static inline void name##_add(struct name* tbl, const element_type* record) { \
     if (tbl->size == tbl->capacity) { \
         tbl->capacity <<= 1; \
-        element_type* new_records = malloc(tbl->capacity * \
-                sizeof(element_type)); \
-        memcpy(new_records, tbl->records, tbl->size); \
+        element_type* records; \
+        if (posix_memalign((void**)&records, 16, \
+                    tbl->capacity * sizeof(element_type))) { \
+            abort(); \
+        } \
+        memcpy(records, tbl->records, tbl->size); \
         free(tbl->records); \
-        tbl->records = new_records; \
+        tbl->records = records; \
     } \
     tbl->records[tbl->size++] = *record; \
 } \

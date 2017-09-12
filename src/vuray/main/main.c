@@ -4,10 +4,12 @@
  *
  * Author: hm2code
  */
+#define _POSIX_C_SOURCE 200112L
 #include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
 #include <stdlib.h>
+#include <float.h>
 
 #include <vuray/math/vec.h>
 #include <vuray/util/imageio.h>
@@ -106,7 +108,7 @@ static void scene_destroy(struct scene* s) {
 
 static void ray_intersect_spheres(const struct ray* r,
         const struct sphere_table* s_tbl, struct hit_table* h_tbl) {
-    struct hit_record hit = (struct hit_record) { .t = MAXFLOAT };
+    struct hit_record hit = (struct hit_record) { .t = FLT_MAX };
     const float a = vec3_dot(r->direction, r->direction);
     for (size_t i = 0; i < s_tbl->size; ++i) {
         const struct sphere* s = &s_tbl->records[i];

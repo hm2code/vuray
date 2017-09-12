@@ -74,6 +74,28 @@ struct ray {
     struct vec3 direction;
 };
 
+struct camera {
+    struct vec3 origin;
+    struct vec3 lower_left;
+    struct vec3 horizontal;
+    struct vec3 vertical;
+};
+
+static struct ray camera_get_ray(const struct camera* c, float u, float v) {
+    return (struct ray) {
+        .origin = c->origin,
+        .direction = vec3_sub(
+                vec3_add(
+                    c->lower_left,
+                    vec3_add(
+                        vec3_mul(c->horizontal, u),
+                        vec3_mul(c->vertical, v)
+                        )
+                    ),
+                c->origin)
+    };
+}
+
 struct scene {
     struct sphere_table spheres;
     struct hit_table hits;
@@ -170,10 +192,12 @@ int main(int argc, const char* argv[]) {
     const int nx = 200;
     const int ny = 100;
 
-    const struct vec3 ll_corner = { -2.f, -1.f, -1.f };
-    const struct vec3 horiz = { 4.f, 0.f, 0.f };
-    const struct vec3 vert = { 0.f, 2.f, 0.f };
-    const struct vec3 origin = { 0.f, 0.f, 0.f };
+    const struct camera cam = (struct camera) {
+        .origin = (struct vec3) { 0.f, 0.f, 0.f },
+        .lower_left = (struct vec3) { -2.f, -1.f, -1.f },
+        .horizontal = (struct vec3) { 4.f, 0.f, 0.f },
+        .vertical = (struct vec3) { 0.f, 2.f, 0.f }
+    };
 
     const size_t size = 3 * nx * ny;
 
@@ -188,15 +212,10 @@ int main(int argc, const char* argv[]) {
     int pixel = 0;
     for (int j = ny - 1; j >= 0; --j) {
         const float v = (float)j / (float)ny;
-        const struct vec3 s_vert = vec3_mul(vert, v);
         for (int i = 0; i < nx; ++i) {
             const float u = (float)i / (float)nx;
-            const struct vec3 s_horiz = vec3_mul(horiz, u);
 
-            const struct ray r = (struct ray) {
-                .origin = origin,
-                .direction = vec3_add(ll_corner, vec3_add(s_horiz, s_vert))
-            };
+            const struct ray r = camera_get_ray(&cam, u, v);
             hit_table_clear(hits);
             ray_intersect_spheres(&r, spheres, hits);
             if (hits->size) {

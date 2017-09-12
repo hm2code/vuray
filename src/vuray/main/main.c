@@ -192,6 +192,12 @@ int main(int argc, const char* argv[]) {
     const int nx = 200;
     const int ny = 100;
 
+    const float invnx = 1.f / nx;
+    const float invny = 1.f / ny;
+
+    const float aax = 0.5f * invnx;
+    const float aay = 0.5f * invny;
+
     const struct camera cam = (struct camera) {
         .origin = (struct vec3) { 0.f, 0.f, 0.f },
         .lower_left = (struct vec3) { -2.f, -1.f, -1.f },
@@ -211,22 +217,30 @@ int main(int argc, const char* argv[]) {
 
     int pixel = 0;
     for (int j = ny - 1; j >= 0; --j) {
-        const float v = (float)j / (float)ny;
         for (int i = 0; i < nx; ++i) {
-            const float u = (float)i / (float)nx;
+            // 3x3 antialiasing
+            struct vec3 col = { 0.f, 0.f, 0.f };
+            float v = j * invny - aay;
+            for (int sv = 3; sv > 0; --sv, v += aay) {
+                float u = i * invnx - aax;
+                for (int su = 3; su > 0; --su, u += aax) {
+                    hit_table_clear(hits);
+                    const struct ray r = camera_get_ray(&cam, u, v);
+                    ray_intersect_spheres(&r, spheres, hits);
+                    if (hits->size) {
+                        const struct hit_record* closest =
+                            &hits->records[hits->size - 1];
+                        col = vec3_add(
+                                col,
+                                vec3_mul(vec3_add(closest->normal, 1.f), 0.5f)
+                                );
 
-            const struct ray r = camera_get_ray(&cam, u, v);
-            hit_table_clear(hits);
-            ray_intersect_spheres(&r, spheres, hits);
-            if (hits->size) {
-                const struct hit_record* closest =
-                    &hits->records[hits->size - 1];
-                vec3_store(&frame_buf[pixel],
-                        vec3_mul(vec3_add(closest->normal, 1.f), 0.5f));
-
-            } else {
-                vec3_store(&frame_buf[pixel], back_color(&r));
+                    } else {
+                        col = vec3_add(col, back_color(&r));
+                    }
+                }
             }
+            vec3_store(&frame_buf[pixel], vec3_div(col, 9.f));
             pixel += 3;
         }
     }

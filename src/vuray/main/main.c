@@ -52,8 +52,8 @@ static inline void name##_clear(struct name* tbl) { \
 }
 
 struct hit_record {
-    struct vec3 point; // intersection point
-    float t; // distance from the ray origin
+    struct vec3 point;  // intersection point
+    float t;            // distance from the ray origin
     struct vec3 normal; // normal at the intersection point
     float reserved;
 };
@@ -82,39 +82,58 @@ static void scene_init(struct scene* s) {
     s->hits = hit_table_create(16);
 
     struct sphere sph = (struct sphere) {
-        .center = { 0.f, 0.f, -1.f },
+        .center = { -1.f, 0.f, -1.5f },
         .radius = 0.5f
     };
     sphere_table_add(&s->spheres, &sph);
 
-    sph.center = (struct vec3) { -1.f, 0.f, -1.5f };
+    sph.center = (struct vec3) { 0.f, 0.f, -1.f };
     sphere_table_add(&s->spheres, &sph);
 
     sph.center = (struct vec3) { 1.f, 0.f, -1.5f };
     sphere_table_add(&s->spheres, &sph);
+
+    sph.center = (struct vec3) { 0.f, -100.5f, -1.f };
+    sph.radius = 100.f;
+    sphere_table_add(&s->spheres, &sph);
 }
 
 static void scene_destroy(struct scene* s) {
-    sphere_table_clear(&s->spheres); // just to suppress unused warning...
+    sphere_table_clear(&s->spheres); // just to suppress "unused" warning...
     sphere_table_destroy(&s->spheres);
     hit_table_destroy(&s->hits);
 }
 
 static void ray_intersect_spheres(const struct ray* r,
         const struct sphere_table* s_tbl, struct hit_table* h_tbl) {
-    struct hit_record hit;
+    struct hit_record hit = (struct hit_record) { .t = MAXFLOAT };
     const float a = vec3_dot(r->direction, r->direction);
     for (size_t i = 0; i < s_tbl->size; ++i) {
         const struct sphere* s = &s_tbl->records[i];
         const struct vec3 oc = vec3_sub(r->origin, s->center);
-        const float b = 2.f * vec3_dot(oc, r->direction);
+        const float b = vec3_dot(oc, r->direction);
         const float c = vec3_dot(oc, oc) - s->radius * s->radius;
-        const float d = b * b - 4.f * a * c;
+        const float d = b * b - a * c;
         if (d >= 0.f) {
-            hit.t = (-b - sqrt(d)) / (2.f * a);
-            hit.point = ray_point_at(r->origin, r->direction, hit.t);
-            hit.normal = vec3_normalize(vec3_sub(hit.point, s->center));
-            hit_table_add(h_tbl, &hit);
+            const float inva = 1.f / a;
+            const float sqrtd = sqrt(d);
+            float t = (-b - sqrtd) * inva;
+            if (t < hit.t && t > 0.f) {
+                hit.t = t;
+                hit.point = ray_point_at(r->origin, r->direction, t);
+                hit.normal = vec3_div(vec3_sub(hit.point, s->center),
+                        s->radius);
+                hit_table_add(h_tbl, &hit);
+            } else {
+                t = (-b + sqrtd) * inva;
+                if (t < hit.t && t > 0.f) {
+                    hit.t = t;
+                    hit.point = ray_point_at(r->origin, r->direction, t);
+                    hit.normal = vec3_div(vec3_sub(hit.point, s->center),
+                            s->radius);
+                    hit_table_add(h_tbl, &hit);
+                }
+            }
         }
     }
 }
@@ -161,6 +180,9 @@ int main(int argc, const char* argv[]) {
     struct scene scn;
     scene_init(&scn);
 
+    const struct sphere_table* spheres = &scn.spheres;
+    struct hit_table* hits = &scn.hits;
+
     int pixel = 0;
     for (int j = ny - 1; j >= 0; --j) {
         const float v = (float)j / (float)ny;
@@ -173,12 +195,13 @@ int main(int argc, const char* argv[]) {
                 .origin = origin,
                 .direction = vec3_add(ll_corner, vec3_add(s_horiz, s_vert))
             };
-            hit_table_clear(&scn.hits);
-            ray_intersect_spheres(&r, &scn.spheres, &scn.hits);
-            if (scn.hits.size) {
+            hit_table_clear(hits);
+            ray_intersect_spheres(&r, spheres, hits);
+            if (hits->size) {
+                const struct hit_record* closest =
+                    &hits->records[hits->size - 1];
                 vec3_store(&frame_buf[pixel],
-                        vec3_mul(vec3_add(scn.hits.records[0].normal, 1.f),
-                            0.5f));
+                        vec3_mul(vec3_add(closest->normal, 1.f), 0.5f));
 
             } else {
                 vec3_store(&frame_buf[pixel], back_color(&r));

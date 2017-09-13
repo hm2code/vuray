@@ -141,6 +141,7 @@ static struct vec3 random_in_unit_sphere(void) {
 
 static void ray_intersect_spheres(const struct ray* r,
         const struct sphere_table* s_tbl, struct hit_table* h_tbl) {
+    const float tmin = 0.0001f;
     struct hit_record hit = (struct hit_record) { .t = FLT_MAX };
     const float a = vec3_dot(r->direction, r->direction);
     for (size_t i = 0; i < s_tbl->size; ++i) {
@@ -153,7 +154,7 @@ static void ray_intersect_spheres(const struct ray* r,
             const float inva = 1.f / a;
             const float sqrtd = sqrt(d);
             float t = (-b - sqrtd) * inva;
-            if (t < hit.t && t > 0.f) {
+            if (t < hit.t && t > tmin) {
                 hit.t = t;
                 hit.point = ray_point_at(r->origin, r->direction, t);
                 hit.normal = vec3_div(vec3_sub(hit.point, s->center),
@@ -161,7 +162,7 @@ static void ray_intersect_spheres(const struct ray* r,
                 hit_table_add(h_tbl, &hit);
             } else {
                 t = (-b + sqrtd) * inva;
-                if (t < hit.t && t > 0.f) {
+                if (t < hit.t && t > tmin) {
                     hit.t = t;
                     hit.point = ray_point_at(r->origin, r->direction, t);
                     hit.normal = vec3_div(vec3_sub(hit.point, s->center),
@@ -194,7 +195,7 @@ static struct vec3 color(const struct ray* r,
                 );
         const struct ray new_r = (struct ray) {
             .origin = closest->point,
-            .direction = target //vec3_normalize(target)
+            .direction = target
         };
         return vec3_mul(color(&new_r, s_tbl, h_tbl), 0.5f);
 

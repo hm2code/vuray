@@ -5,6 +5,7 @@
  * Author: hm2code
  */
 #define _POSIX_C_SOURCE 200112L
+#define _XOPEN_SOURCE
 #include <stdio.h>
 #include <stdbool.h>
 #include <string.h>

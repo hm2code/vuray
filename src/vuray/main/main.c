@@ -256,9 +256,7 @@ int main(int argc, const char* argv[]) {
                 const struct ray r = camera_get_ray(&cam, u, v);
                 col = vec3_add(col, color(&r, spheres, hits));
             }
-            col = vec3_mul(col, invns);
-            col = (struct vec3) { sqrt(col.x), sqrt(col.y), sqrt(col.z) };
-            vec3_store(&frame_buf[pixel], col);
+            vec3_store(&frame_buf[pixel], vec3_mul(col, invns));
             pixel += 3;
         }
     }
@@ -272,7 +270,7 @@ int main(int argc, const char* argv[]) {
         .components = 3
     };
     for (int i = 0; i < size; ++i) {
-        img.pixels[i] = (uint8_t)(255.99f * frame_buf[i]);
+        img.pixels[i] = (uint8_t)(255.99f * sqrt(frame_buf[i]));
     }
 
     free(frame_buf);

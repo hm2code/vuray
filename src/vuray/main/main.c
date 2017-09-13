@@ -128,6 +128,16 @@ static void scene_destroy(struct scene* s) {
     hit_table_destroy(&s->hits);
 }
 
+static struct vec3 random_in_unit_sphere(void) {
+    struct vec3 p = (struct vec3) { drand48(), drand48(), drand48() };
+    p = vec3_sub(vec3_mul(p, 2.f), 1.f);
+    const float len_sq = vec3_len_sq(p);
+    if (len_sq > 1.f) {
+        p = vec3_mul(p, 1.f / sqrt(len_sq));
+    }
+    return p;
+}
+
 static void ray_intersect_spheres(const struct ray* r,
         const struct sphere_table* s_tbl, struct hit_table* h_tbl) {
     struct hit_record hit = (struct hit_record) { .t = FLT_MAX };
@@ -171,6 +181,26 @@ static struct vec3 back_color(const struct ray* r) {
     return vec3_add(vec3_mul(white, 1.f - t), vec3_mul(blue, t));
 }
 
+static struct vec3 color(const struct ray* r,
+        const struct sphere_table* s_tbl, struct hit_table* h_tbl) {
+    hit_table_clear(h_tbl);
+    ray_intersect_spheres(r, s_tbl, h_tbl);
+    if (h_tbl->size) {
+        const struct hit_record* closest = &h_tbl->records[h_tbl->size - 1];
+        const struct vec3 target = vec3_add(
+                closest->normal,
+                random_in_unit_sphere()
+                );
+        const struct ray new_r = (struct ray) {
+            .origin = closest->point,
+            .direction = target //vec3_normalize(target)
+        };
+        return vec3_mul(color(&new_r, s_tbl, h_tbl), 0.5f);
+
+    }
+    return back_color(r);
+}
+
 int main(int argc, const char* argv[]) {
     const char* out_file_name = 0;
 
@@ -191,12 +221,11 @@ int main(int argc, const char* argv[]) {
 
     const int nx = 200;
     const int ny = 100;
+    const int ns = 100;
 
     const float invnx = 1.f / nx;
     const float invny = 1.f / ny;
-
-    const float aax = 0.5f * invnx;
-    const float aay = 0.5f * invny;
+    const float invns = 1.f / ns;
 
     const struct camera cam = (struct camera) {
         .origin = (struct vec3) { 0.f, 0.f, 0.f },
@@ -218,29 +247,16 @@ int main(int argc, const char* argv[]) {
     int pixel = 0;
     for (int j = ny - 1; j >= 0; --j) {
         for (int i = 0; i < nx; ++i) {
-            // 3x3 antialiasing
             struct vec3 col = { 0.f, 0.f, 0.f };
-            float v = j * invny - aay;
-            for (int sv = 3; sv > 0; --sv, v += aay) {
-                float u = i * invnx - aax;
-                for (int su = 3; su > 0; --su, u += aax) {
-                    hit_table_clear(hits);
-                    const struct ray r = camera_get_ray(&cam, u, v);
-                    ray_intersect_spheres(&r, spheres, hits);
-                    if (hits->size) {
-                        const struct hit_record* closest =
-                            &hits->records[hits->size - 1];
-                        col = vec3_add(
-                                col,
-                                vec3_mul(vec3_add(closest->normal, 1.f), 0.5f)
-                                );
-
-                    } else {
-                        col = vec3_add(col, back_color(&r));
-                    }
-                }
+            for (int s = 0; s < ns; ++s) {
+                const float u = (i + drand48()) * invnx;
+                const float v = (j + drand48()) * invny;
+                const struct ray r = camera_get_ray(&cam, u, v);
+                col = vec3_add(col, color(&r, spheres, hits));
             }
-            vec3_store(&frame_buf[pixel], vec3_div(col, 9.f));
+            col = vec3_mul(col, invns);
+            col = (struct vec3) { sqrt(col.x), sqrt(col.y), sqrt(col.z) };
+            vec3_store(&frame_buf[pixel], col);
             pixel += 3;
         }
     }

@@ -203,6 +203,18 @@ static struct vec3 color(const struct ray* r,
     return back_color(r);
 }
 
+static void print_progress(int progress) {
+    const int cur = progress / 5;
+    const int rem = 20 - cur;
+    const char term = progress == 100 ? '\n' : '\r';
+    printf("Rendering [%.*s%.*s] %d%%%c",
+            cur, "********************",
+            rem, "....................",
+            progress,
+            term);
+    fflush(stdout);
+}
+
 int main(int argc, const char* argv[]) {
     const char* out_file_name = 0;
 
@@ -221,8 +233,8 @@ int main(int argc, const char* argv[]) {
         out_file_name = "vuray.ppm";
     }
 
-    const int nx = 200;
-    const int ny = 100;
+    const int nx = 400;
+    const int ny = 200;
     const int ns = 100;
 
     const float invnx = 1.f / nx;
@@ -247,6 +259,8 @@ int main(int argc, const char* argv[]) {
     struct hit_table* hits = &scn.hits;
 
     int pixel = 0;
+    int progress = 0;
+    print_progress(0);
     for (int j = ny - 1; j >= 0; --j) {
         for (int i = 0; i < nx; ++i) {
             struct vec3 col = { 0.f, 0.f, 0.f };
@@ -258,6 +272,11 @@ int main(int argc, const char* argv[]) {
             }
             vec3_store(&frame_buf[pixel], vec3_mul(col, invns));
             pixel += 3;
+            const int new_progress = (pixel * 100) / size;
+            if (new_progress > progress) {
+                progress = new_progress;
+                print_progress(progress);
+            }
         }
     }
 
@@ -277,4 +296,6 @@ int main(int argc, const char* argv[]) {
 
     imageio_write(out_file_name, &img);
     free(img.pixels);
+
+    printf("Output file: %s\n", out_file_name);
 }
